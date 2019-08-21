@@ -1,3 +1,5 @@
+import io
+import sys
 from typing import List, Tuple, Union, Optional, Dict
 
 import numpy as np
@@ -18,7 +20,7 @@ class GridWorldEnv(DiscreteEnv):
         if not len(shape) == 2:
             raise ValueError('shape requires a tuple or a list of len = 2')
 
-        shape: List[int] = list(shape)
+        self.shape: List[int] = list(shape)
         nS: int = np.prod(shape)
         nA: int = 4
         # uniform distribution of states.
@@ -58,4 +60,25 @@ class GridWorldEnv(DiscreteEnv):
         super().__init__(nS, nA, P, isd)
 
     def render(self, mode='human'):
-        pass
+        outfile = io.StringIO() if mode == 'ansi' else sys.stdout
+        grid: np.ndarray = np.arange(self.nS).reshape(self.shape)
+        it: np.nditer = np.nditer(grid, flags=['multi_index'])
+        x_m: int = self.shape[1]
+        while not it.finished:
+            y, x = it.multi_index
+            s = it.index
+
+            if self.s == s:
+                out: str = " x "
+            elif s == 0 or s == self.nS - 1:
+                out: str = " T "
+            else:
+                out: str = " o "
+
+            if x == 0:
+                out = out.lstrip()
+            if x == x_m - 1:
+                out = out.rstrip()
+                out += '\n'
+            outfile.write(out)
+            it.iternext()
