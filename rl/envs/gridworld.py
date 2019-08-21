@@ -12,20 +12,13 @@ class GridWorldEnv(DiscreteEnv):
 
     def __init__(self,
                  shape: Optional[Union[Tuple, List]] = None):
-        if shape is None:
-            shape = [4, 4]
-        if not isinstance(shape, Tuple) and not isinstance(shape, List):
-            raise TypeError('shape requires a tuple or a list as input')
-
-        if not len(shape) == 2:
-            raise ValueError('shape requires a tuple or a list of len = 2')
-
+        shape = self._validate_shape(shape)
         self.shape: List[int] = list(shape)
         nS: int = np.prod(shape)
         nA: int = 4
         # uniform distribution of states.
-        grid: np.ndarray = np.arange(nS).reshape(shape=shape)
         isd: np.ndarray = np.ones(nS) / nS
+        grid: np.ndarray = np.arange(nS).reshape(shape=shape)
 
         # dict of dicts of lists, where
         # P[s][a] == [(probability, next_state, reward, done), ...]
@@ -58,6 +51,16 @@ class GridWorldEnv(DiscreteEnv):
                     P[s][a] = [(1., s, r, is_terminal(ns))]
             it.iternext()
         super().__init__(nS, nA, P, isd)
+
+    @staticmethod
+    def _validate_shape(shape):
+        if shape is None:
+            shape = [4, 4]
+        if not isinstance(shape, Tuple) and not isinstance(shape, List):
+            raise TypeError('shape requires a tuple or a list as input')
+        if not len(shape) == 2:
+            raise ValueError('shape requires a tuple or a list of len = 2')
+        return shape
 
     def render(self, mode='human'):
         outfile = io.StringIO() if mode == 'ansi' else sys.stdout
