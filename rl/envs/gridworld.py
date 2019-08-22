@@ -7,7 +7,7 @@ from gym.envs.toy_text.discrete import DiscreteEnv
 from numpy.core._multiarray_umath import nditer
 
 
-class GridWorldEnv(DiscreteEnv):
+class GridWorld(DiscreteEnv):
     up, down, left, right = 0, 1, 2, 3
 
     def __init__(self,
