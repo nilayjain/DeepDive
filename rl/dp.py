@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+from gym.envs.toy_text.discrete import DiscreteEnv
 
 from rl.envs.gridworld import GridWorld
 
@@ -8,10 +9,15 @@ from rl.envs.gridworld import GridWorld
 class DynamicProgramming:
 
     def __init__(self,
+                 env: Optional[DiscreteEnv] = None,
                  tolerance: Optional[float] = 0.00001,
                  discount_factor: Optional[float] = 1.):
         # all the dp algorithms can work with any DiscreteEnv.
-        self.env = GridWorld()
+        if env is not None:
+            assert isinstance(env, DiscreteEnv), 'dp requires discrete env'
+        else:
+            env = GridWorld()
+        self.env = env
         self.theta = tolerance
         self.gamma = discount_factor
 
