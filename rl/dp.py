@@ -6,6 +6,7 @@ from rl.envs.gridworld import GridWorld
 class DynamicProgramming:
 
     def __init__(self):
+        # all the dp algorithms can work with any DiscreteEnv.
         self.env = GridWorld()
         self.gamma = 1.
         self.theta = 0.00001
@@ -38,7 +39,7 @@ class DynamicProgramming:
         w.r.t the value function).
         :return: optimal policy pi_*, and value function V_*
         """
-        policy = np.ones(self.env.nS, self.env.nA) / 4.
+        policy = np.ones([self.env.nS, self.env.nA]) / 4.
         while True:
             policy_stable: bool = True
             V: np.ndarray = self.policy_evaluation(policy)
@@ -54,7 +55,25 @@ class DynamicProgramming:
                 return policy, V
 
     def value_iteration(self):
-        pass
+        """
+        Use the bellman optimality equation to find optimal value function V_*
+        :return: optimal policy pi_*, and value function V_*
+        """
+        V = np.zeros(self.env.nS)
+        while True:
+            delta: float = 0.
+            for s in range(self.env.nS):
+                av: np.ndarray = self._one_step_lookahead(s, V)
+                na: float = np.max(av) # new action
+                delta = max(delta, abs(na - V[s]))
+                V[s] = na
+            if delta < self.theta:
+                break
+        policy = np.zeros([self.env.nS, self.env.nA])
+        for s in range(self.env.nS):
+            av: np.ndarray = self._one_step_lookahead(s, V)
+            policy[s, np.argmax(av)] = 1.
+        return policy, V
 
     def _one_step_lookahead(self, s: int, V: np.ndarray) -> np.ndarray:
         """
