@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 from rl.envs.gridworld import GridWorld
@@ -5,11 +7,13 @@ from rl.envs.gridworld import GridWorld
 
 class DynamicProgramming:
 
-    def __init__(self):
+    def __init__(self,
+                 tolerance: Optional[float] = 0.00001,
+                 discount_factor: Optional[float] = 1.):
         # all the dp algorithms can work with any DiscreteEnv.
         self.env = GridWorld()
-        self.gamma = 1.
-        self.theta = 0.00001
+        self.theta = tolerance
+        self.gamma = discount_factor
 
     def policy_evaluation(self, policy) -> np.ndarray:
         """
