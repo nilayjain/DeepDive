@@ -74,9 +74,9 @@ class DynamicProgramming:
             delta: float = 0.
             for s in range(self.env.nS):
                 av: np.ndarray = self._one_step_lookahead(s, V)
-                na: float = np.max(av) # new action
-                delta = max(delta, abs(na - V[s]))
-                V[s] = na
+                v: float = np.max(av)  # max value in this state
+                delta = max(delta, abs(v - V[s]))
+                V[s] = v
             if delta < self.theta:
                 break
         policy = np.zeros([self.env.nS, self.env.nA])
