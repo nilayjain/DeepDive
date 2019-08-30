@@ -1,3 +1,4 @@
+import sys
 from collections import Callable, defaultdict
 from typing import List, Tuple
 
@@ -27,7 +28,8 @@ class MonteCarlo:
         """
         q = defaultdict(lambda: np.zeros(self.env.action_space.n))
         counts = defaultdict(lambda: np.zeros(self.env.action_space.n))
-        for _ in range(self.num_episodes):
+        for k in range(1, self.num_episodes + 1):
+            self._print_episode_num(k)
             ep = self._generate_episode(policy)
             ep.reverse()
             g = 0.
@@ -41,6 +43,11 @@ class MonteCarlo:
                 q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
         return q
 
+    def _print_episode_num(self, k):
+        if k % 10000 == 0:
+            print(f'\rEpisode: {k}/{self.num_episodes}', end='')
+            sys.stdout.flush()
+
     def control(self):
         """
         Start with a random policy, and find the optimal policy and the optimal
@@ -51,6 +58,7 @@ class MonteCarlo:
         counts = defaultdict(lambda: np.zeros(self.env.action_space.n))
         policy = self._epsilon_greedy_policy(q)
         for k in range(1, self.num_episodes + 1):
+            self._print_episode_num(k)
             epsilon = 1. / k
             ep = self._generate_episode(policy, epsilon)
             ep.reverse()
@@ -76,6 +84,7 @@ class MonteCarlo:
         target_policy = self._epsilon_greedy_policy(q)
         behaviour_policy = self._random_policy()
         for k in range(1, self.num_episodes + 1):
+            self._print_episode_num(k)
             ep = self._generate_episode(behaviour_policy)
             ep.reverse()
             g = 0.
