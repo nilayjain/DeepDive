@@ -38,7 +38,7 @@ class MonteCarlo:
                 if self.first_visit and self._is_present(ep[i + 1:], s, a):
                     continue
                 counts[s][a] += 1
-                q[s][a] = (q[s][a] + (1. / counts[s][a]) * (g - q[s][a]))
+                q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
         return q
 
     def control(self):
@@ -62,11 +62,34 @@ class MonteCarlo:
                 if self.first_visit and self._is_present(ep[i + 1:], s, a):
                     continue
                 counts[s][a] += 1
-                q[s][a] = (q[s][a] + (1. / counts[s][a]) * (g - q[s][a]))
+                q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
         return policy, q
 
     def weighted_importance_sampling(self):
-        pass
+        """
+        behave according to a random policy, and find the optimal policy and
+        the optimal action value function.
+        :return: pi_*, and q_* (optimal policy and optimal action value func.)
+        """
+        q = defaultdict(lambda: np.zeros(self.env.action_space.n))
+        c = defaultdict(lambda: np.zeros(self.env.action_space.n))
+        target_policy = self._epsilon_greedy_policy(q)
+        behaviour_policy = self._random_policy()
+        for k in range(1, self.num_episodes + 1):
+            ep = self._generate_episode(behaviour_policy)
+            ep.reverse()
+            g = 0.
+            w = 1.
+            for i, step in enumerate(ep):
+                # state, action, reward
+                s, a, r = step
+                g = r + self.gamma * g
+                c[s][a] += w
+                q[s][a] += (w / c[s][a]) * (g - q[s][a])
+                if a != target_policy(s, 0.):
+                    break
+                w *= 1. / (1. / self.env.action_space.n)
+        return target_policy, q
 
     def _generate_episode(self,
                           policy: Callable,
@@ -94,7 +117,7 @@ class MonteCarlo:
 
     def _random_policy(self) -> Callable:
         nA = self.env.action_space.n
-        actions = np.ones_like(nA) / nA
+        actions = np.ones(nA) / nA
 
         def policy(obs, epsilon = 0.):
             return actions
@@ -104,7 +127,8 @@ class MonteCarlo:
     def _epsilon_greedy_policy(self, q: defaultdict) -> Callable:
 
         def policy(obs, epsilon):
-            actions = np.ones_like(self.env.action_space.n) * epsilon
+            nA = self.env.action_space.n
+            actions = np.ones(nA) * (epsilon / nA)
             greedy_action = np.argmax(q[obs])
             actions[greedy_action] += 1. - epsilon
             return actions
