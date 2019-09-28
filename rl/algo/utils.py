@@ -17,7 +17,8 @@ class EpisodeUtils:
         self.episode_rewards = []
 
     def print_episode_num(self, k: int):
-        if k % 10000 == 0:
+        m = self.num_episodes / 100 if self.num_episodes >= 100 else 1
+        if k % m == 0:
             print(f'\rEpisode: {k}/{self.num_episodes}', end='')
             sys.stdout.flush()
 
