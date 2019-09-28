@@ -6,6 +6,8 @@ import gym
 import numpy as np
 from gym import Env
 
+from rl.algo.utils import EpisodeUtils
+
 
 class MonteCarlo:
 
@@ -18,6 +20,7 @@ class MonteCarlo:
         self.num_episodes: int = num_episodes
         self.gamma: float = discount_factor
         self.first_visit: bool = first_visit
+        self.eu = EpisodeUtils(num_episodes)
 
     def prediction(self,
                    policy: Callable[[Tuple], np.ndarray]) -> defaultdict:
@@ -29,15 +32,10 @@ class MonteCarlo:
         q = defaultdict(lambda: np.zeros(self.env.action_space.n))
         counts = defaultdict(lambda: np.zeros(self.env.action_space.n))
         for k in range(1, self.num_episodes + 1):
-            self._print_episode_num(k)
+            self.eu.print_episode_num(k)
             ep = self._generate_episode(policy)
             self._process_episode(counts, ep, q)
         return q
-
-    def _print_episode_num(self, k):
-        if k % 10000 == 0:
-            print(f'\rEpisode: {k}/{self.num_episodes}', end='')
-            sys.stdout.flush()
 
     def control(self):
         """
@@ -49,7 +47,7 @@ class MonteCarlo:
         counts = defaultdict(lambda: np.zeros(self.env.action_space.n))
         policy = self._epsilon_greedy_policy(q)
         for k in range(1, self.num_episodes + 1):
-            self._print_episode_num(k)
+            self.eu.print_episode_num(k)
             epsilon = 1. / k
             ep = self._generate_episode(policy, epsilon)
             self._process_episode(counts, ep, q)
@@ -66,6 +64,7 @@ class MonteCarlo:
                 continue
             counts[s][a] += 1
             q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
+        self.eu.add_ep(len(ep), g)
 
     def weighted_importance_sampling(self):
         """
@@ -78,7 +77,7 @@ class MonteCarlo:
         target_policy = self._epsilon_greedy_policy(q)
         behaviour_policy = self._random_policy()
         for k in range(1, self.num_episodes + 1):
-            self._print_episode_num(k)
+            self.eu.print_episode_num(k)
             ep = self._generate_episode(behaviour_policy)
             ep.reverse()
             g = 0.
@@ -92,6 +91,7 @@ class MonteCarlo:
                 if a != target_policy(s, 0.):
                     break
                 w *= 1. / (1. / self.env.action_space.n)
+            self.eu.add_ep(len(ep), g)
         return target_policy, q
 
     def _generate_episode(self,
