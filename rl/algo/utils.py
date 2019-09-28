@@ -22,6 +22,10 @@ class EpisodeUtils:
             print(f'\rEpisode: {k}/{self.num_episodes}', end='')
             sys.stdout.flush()
 
+    def add_ep(self, ep_len, ep_reward):
+        self.episode_lengths.append(ep_len)
+        self.episode_rewards.append(ep_reward)
+
     def plot(self):
         # plot episode length over time
         self._ep_len()
