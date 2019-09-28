@@ -31,16 +31,7 @@ class MonteCarlo:
         for k in range(1, self.num_episodes + 1):
             self._print_episode_num(k)
             ep = self._generate_episode(policy)
-            ep.reverse()
-            g = 0.
-            for i, step in enumerate(ep):
-                # state, action, reward
-                s, a, r = step
-                g = r + self.gamma * g
-                if self.first_visit and self._is_present(ep[i + 1:], s, a):
-                    continue
-                counts[s][a] += 1
-                q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
+            self._process_episode(counts, ep, q)
         return q
 
     def _print_episode_num(self, k):
@@ -61,17 +52,20 @@ class MonteCarlo:
             self._print_episode_num(k)
             epsilon = 1. / k
             ep = self._generate_episode(policy, epsilon)
-            ep.reverse()
-            g = 0.
-            for i, step in enumerate(ep):
-                # state, action, reward
-                s, a, r = step
-                g = r + self.gamma * g
-                if self.first_visit and self._is_present(ep[i + 1:], s, a):
-                    continue
-                counts[s][a] += 1
-                q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
+            self._process_episode(counts, ep, q)
         return policy, q
+
+    def _process_episode(self, counts, ep, q):
+        ep.reverse()
+        g = 0.
+        for i, step in enumerate(ep):
+            # state, action, reward
+            s, a, r = step
+            g = r + self.gamma * g
+            if self.first_visit and self._is_present(ep[i + 1:], s, a):
+                continue
+            counts[s][a] += 1
+            q[s][a] += (1. / counts[s][a]) * (g - q[s][a])
 
     def weighted_importance_sampling(self):
         """
@@ -108,7 +102,7 @@ class MonteCarlo:
         while True:
             # sample action based on probabilities.
             probs = policy(obs, epsilon)
-            action = np.random.choice(np.arange(probs), p=probs)
+            action = np.random.choice(np.arange(len(probs)), p=probs)
             new_obs, reward, done, _ = self.env.step(action)
             steps.append((obs, action, reward))
             obs = new_obs
