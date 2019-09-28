@@ -1,4 +1,3 @@
-import sys
 from collections import Callable, defaultdict
 from typing import List, Tuple
 
@@ -7,6 +6,7 @@ import numpy as np
 from gym import Env
 
 from rl.algo.utils import EpisodeUtils
+from rl.algo.utils import choose, random_policy, epsilon_greedy_policy
 
 
 class MonteCarlo:
@@ -43,9 +43,10 @@ class MonteCarlo:
         action value function.
         :return: pi_*, and q_* (optimal policy and optimal action value func.)
         """
-        q = defaultdict(lambda: np.zeros(self.env.action_space.n))
-        counts = defaultdict(lambda: np.zeros(self.env.action_space.n))
-        policy = self._epsilon_greedy_policy(q)
+        na = self.env.action_space.n  # num_actions
+        q = defaultdict(lambda: np.zeros(na))
+        counts = defaultdict(lambda: np.zeros(na))
+        policy = epsilon_greedy_policy(na, q)
         for k in range(1, self.num_episodes + 1):
             self.eu.print_episode_num(k)
             epsilon = 1. / k
@@ -72,10 +73,11 @@ class MonteCarlo:
         the optimal action value function.
         :return: pi_*, and q_* (optimal policy and optimal action value func.)
         """
-        q = defaultdict(lambda: np.zeros(self.env.action_space.n))
-        c = defaultdict(lambda: np.zeros(self.env.action_space.n))
-        target_policy = self._epsilon_greedy_policy(q)
-        behaviour_policy = self._random_policy()
+        na = self.env.action_space.n  # num_actions
+        q = defaultdict(lambda: np.zeros(na))
+        c = defaultdict(lambda: np.zeros(na))
+        target_policy = epsilon_greedy_policy(na, q)
+        behaviour_policy = random_policy(na)
         for k in range(1, self.num_episodes + 1):
             self.eu.print_episode_num(k)
             ep = self._generate_episode(behaviour_policy)
@@ -102,7 +104,7 @@ class MonteCarlo:
         while True:
             # sample action based on probabilities.
             probs = policy(obs, epsilon)
-            action = np.random.choice(np.arange(len(probs)), p=probs)
+            action = choose(probs)
             new_obs, reward, done, _ = self.env.step(action)
             steps.append((obs, action, reward))
             obs = new_obs
@@ -117,23 +119,3 @@ class MonteCarlo:
             if state == s and action == a:
                 return True
         return False
-
-    def _random_policy(self) -> Callable:
-        nA = self.env.action_space.n
-        actions = np.ones(nA) / nA
-
-        def policy(obs, epsilon = 0.):
-            return actions
-
-        return policy
-
-    def _epsilon_greedy_policy(self, q: defaultdict) -> Callable:
-
-        def policy(obs, epsilon):
-            nA = self.env.action_space.n
-            actions = np.ones(nA) * (epsilon / nA)
-            greedy_action = np.argmax(q[obs])
-            actions[greedy_action] += 1. - epsilon
-            return actions
-
-        return policy
