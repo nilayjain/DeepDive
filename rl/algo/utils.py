@@ -1,4 +1,6 @@
 import sys
+from collections import Callable, defaultdict
+
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -60,3 +62,26 @@ class EpisodeUtils:
         plt.ylabel("Episode")
         plt.title("Episode per time step")
         plt.show(fig)
+
+
+def choose(probs):
+    return np.random.choice(np.arange(len(probs)), p=probs)
+
+
+def random_policy(num_actions: int) -> Callable:
+    actions = np.ones(num_actions) / num_actions
+
+    def policy(obs, epsilon=0.):
+        return actions
+
+    return policy
+
+
+def epsilon_greedy_policy(num_actions: int, q: defaultdict) -> Callable:
+    def policy(obs, epsilon):
+        actions = np.ones(num_actions) * (epsilon / num_actions)
+        greedy_action = np.argmax(q[obs])
+        actions[greedy_action] += 1. - epsilon
+        return actions
+
+    return policy
