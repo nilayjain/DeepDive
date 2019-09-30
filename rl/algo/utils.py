@@ -85,3 +85,12 @@ def epsilon_greedy_policy(num_actions: int, q: defaultdict) -> Callable:
         return actions
 
     return policy
+
+
+def double_policy(p1: Callable, p2: Callable) -> Callable:
+    def policy(obs, epsilon):
+        a1 = p1(obs, epsilon)
+        a2 = p2(obs, epsilon)
+        return (a1 + a2) / 2.
+
+    return policy
